@@ -1,4 +1,4 @@
-const CACHE_NAME = "yuzhu-app-v10";
+const CACHE_NAME = "yuzhu-app-v11";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
