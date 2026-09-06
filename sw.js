@@ -1,4 +1,4 @@
-const CACHE='yebuzufinal-v4.0-icon2';
+const CACHE='yebuzufinal-v5.0-icon2';
 const ASSETS=[
   './',
   './index.html',
