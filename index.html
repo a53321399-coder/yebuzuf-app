@@ -88,6 +88,15 @@ main{padding:14px}
 .note-editor:empty:before{content:'在這裡開始寫下混沌的記憶……';color:#aaa}
 .formatbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;position:sticky;top:0;z-index:6;background:var(--cream);padding:8px 0;border-bottom:2px solid #ddd}.formatbar button,.formatbar select{min-height:38px}.formatbar .color-group{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.formatbar .color-chip{width:38px;height:38px;min-width:38px;padding:0;border:3px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}.formatbar .color-chip:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}.formatbar .custom-color{display:inline-flex;align-items:center;gap:4px;padding:5px 8px}
 .category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:18px}
+.future-home-card{border:3px solid var(--ink);border-radius:14px;background:#fff;padding:15px;min-height:145px;box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.future-home-card h3{font-size:24px;margin:0 0 10px}
+.future-home-list{display:grid;gap:6px}
+.future-home-item{border:2px solid #ddd;border-radius:9px;background:#fff;padding:7px 9px;cursor:pointer;font-size:13px;line-height:1.35;text-align:left}
+.future-home-item:active{transform:translate(1px,1px)}
+.future-home-detail{margin-top:7px;padding:9px;border:2px dashed #aaa;border-radius:9px;background:#fffaf0;font-size:13px;line-height:1.55;font-weight:600;white-space:pre-wrap;word-break:break-word}
+.future-home-meta{font-size:11px;color:#777;margin-bottom:5px;font-weight:700}
+.future-home-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
 .category-card{border:3px solid var(--ink);border-radius:14px;background:#fff;padding:18px;min-height:145px;box-shadow:5px 5px 0 var(--ink);cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
 .category-card h3{font-size:24px;margin:0}.category-pages{font-size:13px;color:#777;line-height:1.5}.category-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .page-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:15px}
@@ -757,9 +766,30 @@ const PAGE_META=[
  {id:8,name:'🔁 再刷十遍',fn:8},{id:9,name:'❤️ 有意思',fn:9},{id:10,name:'📚 今天選誰',fn:10},{id:11,name:'⏳ 就等你了',fn:11}
 ];
 function pageMeta(id){return PAGE_META.find(p=>p.id===id)||{id:id,name:'未知頁面',fn:id}}
-function showCategories(){currentTab=-1;lastPageView={type:'categories'};document.getElementById('tabs').style.display='none';document.getElementById('main').innerHTML=`<section class="panel"><div class="home-category-head"><div><h2>📚 潘朵拉的寶盒</h2><p class="small">選一個分類，進去找你的頁面。</p></div><button class="pixel red" onclick="editCategory()">＋ 新增分類</button></div></section><section class="category-grid">${db.categories.map(c=>`<article class="category-card" onclick="openCategory('${c.id}')"><div><h3>${esc(c.name)}</h3><div class="category-pages">${c.pages.length?c.pages.map(id=>`<div class="category-page-line">${esc(pageMeta(id).name)}</div>`).join(''):'<div class="small">尚未加入頁面</div>'}</div></div><div class="category-actions"><button class="pixel" onclick="event.stopPropagation();deleteCategory('${c.id}')">刪除</button></div></article>`).join('')}</section>`}
+let homeFutureOpenId=null;
+function toggleHomeFuture(id){
+  homeFutureOpenId=homeFutureOpenId===id?null:id;
+  showCategories();
+}
+function futureHomeCard(){
+  const notes=sortByTime(db.futureNotes,'updatedAt','desc').map(o=>o.x);
+  return `<article class="future-home-card" onclick="event.stopPropagation()">
+    <h3>🔮 預知未來</h3>
+    ${notes.length?`<div class="future-home-list">${notes.map(x=>`
+      <div class="future-home-item" onclick="toggleHomeFuture('${x.id}')">
+        <div>${safeText(x.title||'未命名')}</div>
+        ${homeFutureOpenId===x.id?`<div class="future-home-detail"><div class="future-home-meta">${safeText(x.category||'未分類')}</div>${safeText(x.content||'（沒有內容）')}<div class="future-home-actions"><button class="pixel blue" onclick="event.stopPropagation();editFuture('${x.id}')">編輯</button></div></div>`:''}
+      </div>`).join('')}</div>`:`<div class="small">還沒有備忘錄</div>`}
+  </article>`;
+}
+
+function showCategories(){
+ currentTab=-1;lastPageView={type:'categories'};document.getElementById('tabs').style.display='none';
+ document.getElementById('main').innerHTML=`<section class="panel"><div class="home-category-head"><div><h2>📚 潘朵拉的寶盒</h2><p class="small">選一個分類，進去找你的頁面。</p></div><button class="pixel red" onclick="editCategory()">＋ 新增分類</button></div></section><section class="category-grid">${futureHomeCard()}${db.categories.map(c=>`<article class="category-card" onclick="openCategory('${c.id}')"><div><h3>${esc(c.name)}</h3><div class="category-pages">${c.pages.length?c.pages.map(id=>`<div class="category-page-line">${esc(pageMeta(id).name)}</div>`).join(''):'<div class="small">尚未加入頁面</div>'}</div></div><div class="category-actions"><button class="pixel" onclick="event.stopPropagation();deleteCategory('${c.id}')">刪除</button></div></article>`).join('')}</section>`;
+}
+
 function openCategory(id){const c=db.categories.find(x=>x.id===id);if(!c)return;lastPageView={type:'categories'};document.getElementById('main').innerHTML=`<div class="page-nav"><button class="pixel" onclick="showCategories()">← 上一頁</button><button class="pixel" onclick="showCategories()">⌂ 分類首頁</button></div><section class="panel"><div class="home-category-head"><div><h2>${esc(c.name)}</h2><p class="small">這個分類裡的頁面。</p></div><button class="pixel blue" onclick="editCategory('${c.id}')">✎ 改名稱／頁面</button></div></section><section class="page-grid">${c.pages.map(id=>{const p=pageMeta(id);return `<article class="page-card" onclick="enterPage(${p.id},'${c.id}')"><h3>${esc(p.name)}</h3><small>點擊進入</small></article>`}).join('')||'<div class="empty">這個分類還沒有頁面。</div>'}</section>`}
-function editCategory(id=null){const old=id?db.categories.find(x=>x.id===id):{id:'',name:'',pages:[]};if(!old)return;const checks=PAGE_META.map(p=>`<label class="check"><span>${esc(p.name)}</span><input type="checkbox" class="cat-page" value="${p.id}" ${old.pages.includes(p.id)?'checked':''}></label>`).join('');openModal(id?'編輯分類':'新增分類',`<div class="field"><label>分類名稱</label><input id="catname" value="${esc(old.name)}" placeholder="例如：記憶／錢錢／追劇"></div><div class="field"><label>這個分類包含哪些頁面</label>${checks}</div><div class="actions"><button class="pixel green" onclick="saveCategory('${id||''}')">儲存</button></div>`)}
+function editCategory(id=null){const old=id?db.categories.find(x=>x.id===id):{id:'',name:'',pages:[]};if(!old)return;const checks=PAGE_META.filter(p=>p.id!==0).map(p=>`<label class="check"><span>${esc(p.name)}</span><input type="checkbox" class="cat-page" value="${p.id}" ${old.pages.includes(p.id)?'checked':''}></label>`).join('');openModal(id?'編輯分類':'新增分類',`<div class="field"><label>分類名稱</label><input id="catname" value="${esc(old.name)}" placeholder="例如：記憶／錢錢／追劇"></div><div class="field"><label>這個分類包含哪些頁面</label>${checks}</div><div class="actions"><button class="pixel green" onclick="saveCategory('${id||''}')">儲存</button></div>`)}
 function saveCategory(id){const name=document.getElementById('catname').value.trim()||'未命名分類';const pages=[...document.querySelectorAll('.cat-page:checked')].map(e=>Number(e.value));const old=id?db.categories.find(x=>x.id===id):null;const x={id:id||uid('cat'),name,pages};const i=db.categories.findIndex(v=>v.id===x.id);if(i<0)db.categories.push(x);else db.categories[i]=x;save();closeModal();showCategories()}
 function deleteCategory(id){if(db.categories.length<=1)return alert('至少保留一個分類。');if(confirm('刪除這個分類？頁面本身與資料不會被刪除。')){db.categories=db.categories.filter(x=>x.id!==id);save();showCategories()}}
 
@@ -884,6 +914,10 @@ async function seedReturnSponsorshipSafely(){
 
 async function initApp(){
  await migrateStorageToIndexedDB();
+ // 「預知未來」改為分類首頁獨立的備忘錄格，不再隸屬任何分類。
+ let futureRemoved=false;
+ db.categories.forEach(c=>{const before=c.pages.length;c.pages=c.pages.filter(id=>id!==0);if(c.pages.length!==before)futureRemoved=true});
+ if(futureRemoved)save();
  await seedReturnSponsorshipSafely();
  if(!Array.isArray(db.memoryFolders))db.memoryFolders=[];
  if(!Array.isArray(db.memoryNotes))db.memoryNotes=[];
